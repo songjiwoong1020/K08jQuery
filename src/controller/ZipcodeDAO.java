@@ -1,22 +1,21 @@
 package controller;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
-import javax.servlet.ServletContext;
 import javax.sql.DataSource;
 
-public class OracleDAO {
+public class ZipcodeDAO {
 	
 	Connection con;
 	PreparedStatement psmt;
 	ResultSet rs;
 	
-	public OracleDAO(){
+	public ZipcodeDAO() {
 		try {
 			Context ctx = new InitialContext();
 			DataSource source = (DataSource)ctx.lookup("java:comp/env/jdbc/myoracle");
@@ -42,33 +41,62 @@ public class OracleDAO {
 		}
 	}
 	
-	public boolean isMember(String id, String pass) {
+	//우편번호 테이블에서 시/도 가져오기
+	public ArrayList<String> getSido(){
+		ArrayList<String> sidoAddr = new ArrayList<String>();
 		
-		String sql = "SELECT COUNT(*) FROM member WHERE id=? AND pass=?";
-		int isMember = 0;
-		boolean isFlag = false;
-		
+		String sql = "SELECT sido FROM zipcode WHERE 1=1 GROUP BY sido ORDER BY sido ASC";
 		try {
 			psmt = con.prepareStatement(sql);
-			psmt.setString(1, id);
-			psmt.setString(2, pass);
 			rs = psmt.executeQuery();
-			rs.next();
-			
-			isMember = rs.getInt(1);
-			System.out.println("affected:" + isMember);
-			if(isMember == 0){
-				isFlag = false;
-			} else {
-				isFlag = true;
+			while(rs.next()) {
+				sidoAddr.add(rs.getString(1));
 			}
-			
 		}
-		catch(Exception e) {
-			isFlag = false;
-			e.printStackTrace();
+		catch (Exception e) {
 		}
-		return isFlag;
+		
+		return sidoAddr;
 	}
-
+	
+	//우편번호 테이블에서 각 시/도에 해당하는 구/군 가져오기
+	public ArrayList<String> getGugun(String sido){
+		ArrayList<String> gugunAddr = new ArrayList<String>();
+		
+		String sql = "SELECT gugun FROM zipcode WHERE sido=? GROUP BY gugun ORDER BY gugun DESC";
+		try {
+			psmt = con.prepareStatement(sql);
+			psmt.setString(1, sido);
+			rs = psmt.executeQuery();
+			while(rs.next()) {
+				gugunAddr.add(rs.getString(1));
+			}
+		}
+		catch (Exception e) {
+		}
+		
+		return gugunAddr;
+	}
+	
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
